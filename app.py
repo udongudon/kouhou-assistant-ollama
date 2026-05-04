@@ -59,6 +59,16 @@ def _inject_theme_css() -> None:
             color: var(--kouhou-ink);
         }
 
+        .stApp,
+        .stApp p,
+        .stApp label,
+        .stApp span,
+        .stApp div,
+        .stMarkdown,
+        [data-testid="stMarkdownContainer"] {
+            color: var(--kouhou-ink);
+        }
+
         .block-container {
             max-width: 1180px;
             padding-top: 2.4rem;
@@ -77,6 +87,19 @@ def _inject_theme_css() -> None:
                 radial-gradient(circle at 85% 15%, rgba(199, 154, 53, 0.32), transparent 18rem);
             box-shadow: 0 22px 55px rgba(16, 42, 67, 0.16);
             color: white;
+        }
+
+        .kouhou-hero,
+        .kouhou-hero div,
+        .kouhou-hero h1,
+        .kouhou-hero p,
+        .kouhou-hero span,
+        .kouhou-hero strong {
+            color: white;
+        }
+
+        .kouhou-hero .kouhou-kicker {
+            color: #f8df9a;
         }
 
         .kouhou-hero::after {
@@ -219,17 +242,48 @@ def _inject_theme_css() -> None:
             background: linear-gradient(135deg, var(--kouhou-blue), var(--kouhou-navy));
             box-shadow: 0 12px 26px rgba(29, 95, 159, 0.22);
             font-weight: 800;
+            color: #ffffff;
+        }
+
+        div.stButton > button[kind="primary"] p,
+        div.stButton > button[kind="primary"] span {
+            color: #ffffff;
         }
 
         div.stButton > button,
         div.stDownloadButton > button {
             border-radius: 999px;
             border-color: rgba(16, 42, 67, 0.16);
+            background: #ffffff;
+            color: var(--kouhou-navy);
+        }
+
+        div.stButton > button p,
+        div.stButton > button span,
+        div.stDownloadButton > button p,
+        div.stDownloadButton > button span {
+            color: inherit;
         }
 
         div[data-testid="stTextArea"] textarea,
         div[data-testid="stTextInput"] input {
             border-radius: 16px;
+            background: #ffffff;
+            color: var(--kouhou-ink);
+            caret-color: var(--kouhou-blue);
+        }
+
+        div[data-testid="stTextArea"] textarea::placeholder,
+        div[data-testid="stTextInput"] input::placeholder {
+            color: #94a3b8;
+            opacity: 1;
+        }
+
+        div[data-testid="stSelectbox"] div,
+        div[data-testid="stFileUploader"] div,
+        div[data-testid="stRadio"] label,
+        div[data-testid="stCheckbox"] label {
+            color: var(--kouhou-ink);
         }
 
         .stTabs [data-baseweb="tab-list"] {
@@ -240,6 +294,30 @@ def _inject_theme_css() -> None:
             border-radius: 999px;
             padding: 0.55rem 1rem;
             background: rgba(255, 255, 255, 0.72);
+            color: var(--kouhou-navy);
+        }
+
+        .stTabs [data-baseweb="tab"] p,
+        .stTabs [data-baseweb="tab"] span {
+            color: var(--kouhou-navy);
+        }
+
+        div[data-testid="stMetric"] {
+            background: #ffffff;
+            border: 1px solid var(--kouhou-border);
+            border-radius: 18px;
+            padding: 0.75rem;
+        }
+
+        div[data-testid="stMetric"] label,
+        div[data-testid="stMetric"] div {
+            color: var(--kouhou-ink);
+        }
+
+        div[data-testid="stExpander"] {
+            background: rgba(255, 255, 255, 0.82);
+            border-color: var(--kouhou-border);
+            border-radius: 18px;
         }
 
         @media (max-width: 760px) {
