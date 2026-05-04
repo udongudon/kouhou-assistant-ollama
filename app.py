@@ -330,6 +330,31 @@ def _inject_theme_css() -> None:
             fill: var(--kouhou-navy) !important;
         }
 
+        div[data-testid="stFileUploaderFile"] {
+            background: #ffffff !important;
+            border: 1px solid rgba(29, 95, 159, 0.22) !important;
+            border-radius: 14px !important;
+            color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stFileUploaderFile"] div,
+        div[data-testid="stFileUploaderFile"] span,
+        div[data-testid="stFileUploaderFile"] small,
+        div[data-testid="stFileUploaderFile"] p {
+            color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stFileUploaderFile"] svg {
+            color: var(--kouhou-navy) !important;
+            fill: var(--kouhou-navy) !important;
+        }
+
+        div[data-testid="stFileUploaderFile"] button {
+            background: #eef6ff !important;
+            border: 1px solid rgba(29, 95, 159, 0.22) !important;
+            color: var(--kouhou-navy) !important;
+        }
+
         .stTabs [data-baseweb="tab-list"] {
             gap: 0.4rem;
         }
