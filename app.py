@@ -341,7 +341,10 @@ def _inject_theme_css() -> None:
         div[data-testid="stFileUploader"] section > div,
         div[data-testid="stFileUploader"] section > div > div,
         div[data-testid="stFileUploader"] [data-testid*="FileUploaderFile"],
-        div[data-testid="stFileUploader"] [data-testid*="UploadedFile"] {
+        div[data-testid="stFileUploader"] [data-testid*="UploadedFile"],
+        div[data-testid="stFileUploader"] [data-baseweb="tag"],
+        div[data-testid="stFileUploader"] li,
+        div[data-testid="stFileUploader"] [role="listitem"] {
             background: #ffffff !important;
             background-color: #ffffff !important;
             color: var(--kouhou-ink) !important;
@@ -349,12 +352,18 @@ def _inject_theme_css() -> None:
 
         div[data-testid="stFileUploader"] [data-testid*="FileUploaderFile"] *,
         div[data-testid="stFileUploader"] [data-testid*="UploadedFile"] *,
+        div[data-testid="stFileUploader"] [data-baseweb="tag"] *,
+        div[data-testid="stFileUploader"] li *,
+        div[data-testid="stFileUploader"] [role="listitem"] *,
         div[data-testid="stFileUploader"] section > div > div * {
             color: var(--kouhou-ink) !important;
         }
 
         div[data-testid="stFileUploader"] [data-testid*="FileUploaderFile"] svg,
         div[data-testid="stFileUploader"] [data-testid*="UploadedFile"] svg,
+        div[data-testid="stFileUploader"] [data-baseweb="tag"] svg,
+        div[data-testid="stFileUploader"] li svg,
+        div[data-testid="stFileUploader"] [role="listitem"] svg,
         div[data-testid="stFileUploader"] section > div > div svg {
             color: var(--kouhou-navy) !important;
             fill: var(--kouhou-navy) !important;
