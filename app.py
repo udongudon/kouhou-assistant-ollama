@@ -332,9 +332,32 @@ def _inject_theme_css() -> None:
 
         div[data-testid="stFileUploaderFile"] {
             background: #ffffff !important;
+            background-color: #ffffff !important;
             border: 1px solid rgba(29, 95, 159, 0.22) !important;
             border-radius: 14px !important;
             color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stFileUploader"] section > div,
+        div[data-testid="stFileUploader"] section > div > div,
+        div[data-testid="stFileUploader"] [data-testid*="FileUploaderFile"],
+        div[data-testid="stFileUploader"] [data-testid*="UploadedFile"] {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stFileUploader"] [data-testid*="FileUploaderFile"] *,
+        div[data-testid="stFileUploader"] [data-testid*="UploadedFile"] *,
+        div[data-testid="stFileUploader"] section > div > div * {
+            color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stFileUploader"] [data-testid*="FileUploaderFile"] svg,
+        div[data-testid="stFileUploader"] [data-testid*="UploadedFile"] svg,
+        div[data-testid="stFileUploader"] section > div > div svg {
+            color: var(--kouhou-navy) !important;
+            fill: var(--kouhou-navy) !important;
         }
 
         div[data-testid="stFileUploaderFile"] div,
