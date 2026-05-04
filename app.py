@@ -62,8 +62,6 @@ def _inject_theme_css() -> None:
         .stApp,
         .stApp p,
         .stApp label,
-        .stApp span,
-        .stApp div,
         .stMarkdown,
         [data-testid="stMarkdownContainer"] {
             color: var(--kouhou-ink);
@@ -239,23 +237,23 @@ def _inject_theme_css() -> None:
             border: 0;
             border-radius: 999px;
             padding: 0.72rem 1.5rem;
-            background: linear-gradient(135deg, var(--kouhou-blue), var(--kouhou-navy));
+            background: linear-gradient(135deg, var(--kouhou-blue), var(--kouhou-navy)) !important;
             box-shadow: 0 12px 26px rgba(29, 95, 159, 0.22);
             font-weight: 800;
-            color: #ffffff;
+            color: #ffffff !important;
         }
 
         div.stButton > button[kind="primary"] p,
         div.stButton > button[kind="primary"] span {
-            color: #ffffff;
+            color: #ffffff !important;
         }
 
         div.stButton > button,
         div.stDownloadButton > button {
             border-radius: 999px;
             border-color: rgba(16, 42, 67, 0.16);
-            background: #ffffff;
-            color: var(--kouhou-navy);
+            background: #ffffff !important;
+            color: var(--kouhou-navy) !important;
         }
 
         div.stButton > button p,
@@ -268,8 +266,8 @@ def _inject_theme_css() -> None:
         div[data-testid="stTextArea"] textarea,
         div[data-testid="stTextInput"] input {
             border-radius: 16px;
-            background: #ffffff;
-            color: var(--kouhou-ink);
+            background: #ffffff !important;
+            color: var(--kouhou-ink) !important;
             caret-color: var(--kouhou-blue);
         }
 
@@ -279,11 +277,21 @@ def _inject_theme_css() -> None:
             opacity: 1;
         }
 
-        div[data-testid="stSelectbox"] div,
-        div[data-testid="stFileUploader"] div,
         div[data-testid="stRadio"] label,
         div[data-testid="stCheckbox"] label {
             color: var(--kouhou-ink);
+        }
+
+        div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+            background: #ffffff !important;
+            border-color: rgba(16, 42, 67, 0.2) !important;
+            color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stSelectbox"] [data-baseweb="select"] span,
+        div[data-testid="stSelectbox"] [data-baseweb="select"] svg {
+            color: var(--kouhou-ink) !important;
+            fill: var(--kouhou-ink) !important;
         }
 
         .stTabs [data-baseweb="tab-list"] {
@@ -318,6 +326,30 @@ def _inject_theme_css() -> None:
             background: rgba(255, 255, 255, 0.82);
             border-color: var(--kouhou-border);
             border-radius: 18px;
+        }
+
+        div[data-testid="stExpander"] details,
+        div[data-testid="stExpander"] summary {
+            background: #ffffff !important;
+            color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stExpander"] summary p,
+        div[data-testid="stExpander"] summary span,
+        div[data-testid="stExpander"] summary svg {
+            color: var(--kouhou-ink) !important;
+            fill: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stAlert"] {
+            background: #ffffff !important;
+            color: var(--kouhou-ink) !important;
+            border: 1px solid var(--kouhou-border);
+        }
+
+        div[data-testid="stAlert"] p,
+        div[data-testid="stAlert"] span {
+            color: var(--kouhou-ink) !important;
         }
 
         @media (max-width: 760px) {
