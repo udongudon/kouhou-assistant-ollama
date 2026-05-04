@@ -17,6 +17,8 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 PROMPTS_DIR = ROOT / "prompts"
 CONFIG_DIR = ROOT / "config"
+ClaudeClient = anthropic.Anthropic
+ClaudeApiError = anthropic.APIError
 
 
 # モデル定義: 表示名 → API ID + 振る舞い
@@ -38,6 +40,11 @@ MODELS: dict[str, dict[str, Any]] = {
     },
 }
 DEFAULT_MODEL_LABEL = "Haiku 4.5（高速・低コスト）"
+
+
+def create_client(api_key: str) -> ClaudeClient:
+    """UI層がAnthropic SDKへ直接依存しないようにクライアント生成を集約する。"""
+    return anthropic.Anthropic(api_key=api_key)
 
 
 def _read(path: Path) -> str:
@@ -87,7 +94,7 @@ def _build_request_kwargs(
     return kwargs
 
 
-def _stream_text(client: anthropic.Anthropic, **kwargs: Any) -> tuple[str, Any]:
+def _stream_text(client: ClaudeClient, **kwargs: Any) -> tuple[str, Any]:
     """ストリーミングで応答を取得し、テキストと最終メッセージを返す。"""
     with client.messages.stream(**kwargs) as stream:
         message = stream.get_final_message()
@@ -96,7 +103,7 @@ def _stream_text(client: anthropic.Anthropic, **kwargs: Any) -> tuple[str, Any]:
 
 
 def extract_summary(
-    client: anthropic.Anthropic,
+    client: ClaudeClient,
     document_text: str,
     model_label: str = DEFAULT_MODEL_LABEL,
 ) -> tuple[dict[str, Any], Any]:
@@ -123,7 +130,7 @@ def extract_summary(
 
 
 def generate_channel(
-    client: anthropic.Anthropic,
+    client: ClaudeClient,
     summary: dict[str, Any],
     channel_id: str,
     configs: Configs,
@@ -148,7 +155,7 @@ def generate_channel(
 
 
 def revise_channel(
-    client: anthropic.Anthropic,
+    client: ClaudeClient,
     current_text: str,
     instruction: str,
     channel_id: str,
@@ -238,19 +245,32 @@ def _max_tokens_for_channel(channel_id: str) -> int:
     }.get(channel_id, 2500)
 
 
-_JSON_RE = re.compile(r"\{[\s\S]*\}")
+_FENCED_JSON_RE = re.compile(r"```(?:json)?\s*([\s\S]*?)\s*```", re.IGNORECASE)
 
 
 def _parse_json_response(text: str) -> dict[str, Any]:
     """応答からJSONを抜き出してパースする。前後にコードブロックや解説が混じっても拾えるように。"""
     stripped = text.strip()
-    if stripped.startswith("```"):
-        stripped = re.sub(r"^```[a-zA-Z]*\n?", "", stripped)
-        stripped = re.sub(r"\n?```$", "", stripped)
-    try:
-        return json.loads(stripped)
-    except json.JSONDecodeError:
-        match = _JSON_RE.search(stripped)
-        if not match:
-            raise
-        return json.loads(match.group(0))
+    candidates = [stripped]
+    candidates.extend(match.group(1).strip() for match in _FENCED_JSON_RE.finditer(stripped))
+
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(stripped):
+        if char != "{":
+            continue
+        try:
+            parsed, _ = decoder.raw_decode(stripped[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+
+    return json.loads(stripped)

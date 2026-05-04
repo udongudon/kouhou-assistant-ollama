@@ -8,9 +8,9 @@ import io
 import json
 import os
 import re
+from hashlib import sha256
 from typing import Any
 
-import anthropic
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -18,7 +18,10 @@ from src.extract import extract, truncate_for_prompt
 from src.generate import (
     DEFAULT_MODEL_LABEL,
     MODELS,
+    ClaudeApiError,
+    ClaudeClient,
     Configs,
+    create_client,
     extract_summary,
     generate_channel,
     revise_channel,
@@ -61,22 +64,27 @@ def _check_password() -> bool:
     return False
 
 
-def _get_client() -> anthropic.Anthropic | None:
+def _get_client() -> ClaudeClient | None:
     api_key = _get_secret("ANTHROPIC_API_KEY")
     if not api_key:
         st.error(
             "ANTHROPIC_API_KEY が設定されていません。`.env` か `.streamlit/secrets.toml` に追加してください。"
         )
         return None
-    return anthropic.Anthropic(api_key=api_key)
+    return create_client(api_key)
 
 
 def _input_section() -> str | None:
     """議案書テキストを取得。"""
     st.subheader("1. 議案書を入力")
-    tab_paste, tab_upload = st.tabs(["テキストを貼り付け", "ファイルをアップロード"])
+    input_method = st.radio(
+        "入力方法",
+        ["テキストを貼り付け", "ファイルをアップロード"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
-    with tab_paste:
+    if input_method == "テキストを貼り付け":
         pasted = st.text_area(
             "議案書の本文を貼り付けてください",
             height=300,
@@ -85,24 +93,24 @@ def _input_section() -> str | None:
         )
         if pasted.strip():
             return pasted.strip()
+        return None
 
-    with tab_upload:
-        uploaded = st.file_uploader(
-            "PDF / Word(.docx) / テキスト(.txt) を選択",
-            type=["pdf", "docx", "txt", "md"],
-            accept_multiple_files=False,
-        )
-        if uploaded is not None:
-            try:
-                file_bytes = uploaded.read()
-                text = extract(io.BytesIO(file_bytes), uploaded.name)
-                if not text.strip():
-                    st.warning("ファイルからテキストを抽出できませんでした。スキャンPDFの可能性があります。")
-                    return None
-                return text
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"ファイルの読み込みに失敗しました: {exc}")
+    uploaded = st.file_uploader(
+        "PDF / Word(.docx) / テキスト(.txt) を選択",
+        type=["pdf", "docx", "txt", "md"],
+        accept_multiple_files=False,
+    )
+    if uploaded is not None:
+        try:
+            file_bytes = uploaded.read()
+            text = extract(io.BytesIO(file_bytes), uploaded.name)
+            if not text.strip():
+                st.warning("ファイルからテキストを抽出できませんでした。スキャンPDFの可能性があります。")
                 return None
+            return text
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"ファイルの読み込みに失敗しました: {exc}")
+            return None
     return None
 
 
@@ -151,13 +159,13 @@ def _options_section() -> tuple[str, str]:
 
 
 def _ensure_summary(
-    client: anthropic.Anthropic,
+    client: ClaudeClient,
     document_text: str,
     model_label: str,
 ) -> dict[str, Any] | None:
     """サマリをセッションに作る or 取り出す。"""
     cache_key = "summary"
-    text_hash = hash((document_text, model_label))
+    text_hash = _stable_digest(document_text, model_label)
 
     if (
         cache_key in st.session_state
@@ -173,7 +181,7 @@ def _ensure_summary(
             status.update(label="サマリのJSON解析に失敗", state="error")
             st.error(f"サマリのJSONを解析できませんでした: {exc}")
             return None
-        except anthropic.APIError as exc:
+        except ClaudeApiError as exc:
             status.update(label="API呼び出しに失敗", state="error")
             st.error(f"Claude API エラー: {exc}")
             return None
@@ -200,7 +208,7 @@ def _push_history(channel_id: str, text: str, instruction: str) -> None:
 
 
 def _run_channel(
-    client: anthropic.Anthropic,
+    client: ClaudeClient,
     summary: dict[str, Any],
     channel_id: str,
     configs: Configs,
@@ -218,7 +226,7 @@ def _run_channel(
                 model_label=model_label,
                 extra_instructions=extra_instructions or None,
             )
-        except anthropic.APIError as exc:
+        except ClaudeApiError as exc:
             st.error(f"生成に失敗しました ({channel_id}): {exc}")
             return None
     _set_result(channel_id, text)
@@ -258,7 +266,7 @@ def _render_char_counts(channel_id: str, text: str, channel_cfg: dict[str, Any])
 
 
 def _render_revision_form(
-    client: anthropic.Anthropic,
+    client: ClaudeClient,
     channel_id: str,
     current_text: str,
     configs: Configs,
@@ -285,7 +293,7 @@ def _render_revision_form(
                     configs=configs,
                     model_label=model_label,
                 )
-            except anthropic.APIError as exc:
+            except ClaudeApiError as exc:
                 st.error(f"書き直しに失敗しました: {exc}")
                 return
         _push_history(channel_id, current_text, instruction.strip())
@@ -311,7 +319,7 @@ def _render_history(channel_id: str) -> None:
 
 
 def _render_results(
-    client: anthropic.Anthropic,
+    client: ClaudeClient,
     summary: dict[str, Any],
     selected_channels: list[str],
     configs: Configs,
@@ -396,6 +404,26 @@ def _render_results(
             _render_history(channel_id)
 
 
+def _stable_digest(*values: str) -> str:
+    """入力内容の同一性判定をプロセスに依存しない形にする。"""
+    digest = sha256()
+    for value in values:
+        digest.update(value.encode("utf-8"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _clear_generated_state() -> None:
+    """議案書や生成条件が変わった時に古い結果を混ぜない。"""
+    for key in list(st.session_state.keys()):
+        if key.startswith(("result_", "editor_", "history_")) or key in (
+            "summary",
+            "summary_hash",
+            "active_generation_key",
+        ):
+            st.session_state.pop(key, None)
+
+
 def main() -> None:
     if not _check_password():
         return
@@ -420,16 +448,23 @@ def main() -> None:
         help="クリックすると中間サマリと選択チャネルの広報文をすべて生成し直します。",
     )
 
-    if do_generate:
-        # 既存結果・編集中テキスト・修正履歴をすべてリセット
-        for key in list(st.session_state.keys()):
-            if key.startswith(("result_", "editor_", "history_")) or key in (
-                "summary",
-                "summary_hash",
-            ):
-                st.session_state.pop(key, None)
+    generation_key = ""
+    if document_text:
+        generation_key = _stable_digest(document_text, model_label, extra_instructions)
 
-    if document_text and (do_generate or "summary" in st.session_state):
+    if do_generate and document_text:
+        _clear_generated_state()
+        st.session_state["active_generation_key"] = generation_key
+
+    can_render_results = (
+        bool(document_text)
+        and st.session_state.get("active_generation_key") == generation_key
+    )
+
+    if document_text and not do_generate and "summary" in st.session_state and not can_render_results:
+        st.info("入力内容または生成条件が変更されています。新しい内容で作る場合は「広報文を生成 / 再構築」を押してください。")
+
+    if can_render_results:
         truncated, was_truncated = truncate_for_prompt(document_text)
         if was_truncated:
             st.warning(
