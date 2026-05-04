@@ -238,9 +238,20 @@ def _inject_theme_css() -> None:
             border-radius: 999px;
             padding: 0.72rem 1.5rem;
             background: linear-gradient(135deg, var(--kouhou-blue), var(--kouhou-navy)) !important;
+            background-color: var(--kouhou-blue) !important;
             box-shadow: 0 12px 26px rgba(29, 95, 159, 0.22);
             font-weight: 800;
             color: #ffffff !important;
+        }
+
+        div.stButton > button[kind="primary"]:hover,
+        div.stButton > button[kind="primary"]:focus,
+        div.stButton > button[kind="primary"]:active {
+            border: 0 !important;
+            background: linear-gradient(135deg, #246fae, var(--kouhou-navy)) !important;
+            background-color: #246fae !important;
+            color: #ffffff !important;
+            box-shadow: 0 14px 30px rgba(29, 95, 159, 0.28);
         }
 
         div.stButton > button[kind="primary"] p,
@@ -837,7 +848,6 @@ def main() -> None:
         "広報文を生成 / 再構築",
         type="primary",
         disabled=not document_text,
-        help="クリックすると中間サマリと選択チャネルの広報文をすべて生成し直します。",
     )
 
     generation_key = ""
