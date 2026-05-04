@@ -233,6 +233,51 @@ def _inject_theme_css() -> None:
             line-height: 1.5;
         }
 
+        .kouhou-result-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem 1rem;
+            margin: 0.75rem 0 0.85rem;
+            border: 1px solid var(--kouhou-border);
+            border-radius: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+        }
+
+        .kouhou-result-title {
+            color: var(--kouhou-navy);
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .kouhou-result-caption {
+            color: var(--kouhou-muted);
+            font-size: 0.78rem;
+            margin-top: 0.18rem;
+        }
+
+        .kouhou-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 5.4rem;
+            padding: 0.42rem 0.72rem;
+            border-radius: 999px;
+            background: #eef6ff;
+            color: var(--kouhou-blue);
+            font-size: 0.82rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .kouhou-revise-note {
+            margin: 0.9rem 0 0.4rem;
+            color: var(--kouhou-muted);
+            font-size: 0.86rem;
+        }
+
         div.stButton > button[kind="primary"] {
             border: 0;
             border-radius: 999px;
@@ -280,6 +325,12 @@ def _inject_theme_css() -> None:
             background: #ffffff !important;
             color: var(--kouhou-ink) !important;
             caret-color: var(--kouhou-blue);
+        }
+
+        div[data-testid="stTextArea"] textarea {
+            border: 1px solid rgba(16, 42, 67, 0.18);
+            box-shadow: inset 0 1px 0 rgba(16, 42, 67, 0.03);
+            line-height: 1.75;
         }
 
         div[data-testid="stTextArea"] textarea::placeholder,
@@ -661,7 +712,7 @@ def _render_char_counts(channel_id: str, text: str, channel_cfg: dict[str, Any])
             return
 
     # その他のチャネルは合計のみ
-    st.caption(f"📝 文字数: **{total}字**　目安: {target}")
+    st.caption(f"目安: {target}")
 
 
 def _render_revision_form(
@@ -673,6 +724,10 @@ def _render_revision_form(
 ) -> None:
     """「ここをこう直して」フォーム。"""
     label = configs.channel(channel_id)["label"]
+    st.markdown(
+        '<p class="kouhou-revise-note">AIで整え直したい場合は、修正指示を短く入力してください。</p>',
+        unsafe_allow_html=True,
+    )
     with st.form(key=f"revise_form_{channel_id}", clear_on_submit=True):
         instruction = st.text_input(
             "ここをこう直して",
@@ -756,6 +811,18 @@ def _render_results(
                 continue
 
             # 文字数表示
+            st.markdown(
+                f"""
+                <div class="kouhou-result-toolbar">
+                    <div>
+                        <div class="kouhou-result-title">{channel_cfg["label"]}</div>
+                        <div class="kouhou-result-caption">本文は直接編集できます。必要に応じてAI書き直しやDLを使ってください。</div>
+                    </div>
+                    <div class="kouhou-pill">{len(text)}字</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             _render_char_counts(channel_id, text, channel_cfg)
 
             # 編集可能テキストエリア（編集即反映）
