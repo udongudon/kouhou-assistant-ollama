@@ -369,6 +369,16 @@ def _inject_theme_css() -> None:
             fill: var(--kouhou-navy) !important;
         }
 
+        div[data-testid="stFileUploader"] [data-testid*="FileUploaderFile"] div:has(> svg),
+        div[data-testid="stFileUploader"] [data-testid*="UploadedFile"] div:has(> svg),
+        div[data-testid="stFileUploader"] [data-baseweb="tag"] div:has(> svg),
+        div[data-testid="stFileUploader"] li div:has(> svg),
+        div[data-testid="stFileUploader"] [role="listitem"] div:has(> svg) {
+            background: #eef6ff !important;
+            background-color: #eef6ff !important;
+            border-radius: 10px !important;
+        }
+
         div[data-testid="stFileUploaderFile"] div,
         div[data-testid="stFileUploaderFile"] span,
         div[data-testid="stFileUploaderFile"] small,
