@@ -36,6 +36,264 @@ st.set_page_config(
 )
 
 
+def _inject_theme_css() -> None:
+    """Streamlit標準UIに公的な広報ツールらしい質感を足す。"""
+    st.markdown(
+        """
+        <style>
+        :root {
+            --kouhou-navy: #102a43;
+            --kouhou-blue: #1d5f9f;
+            --kouhou-gold: #c79a35;
+            --kouhou-ink: #1f2933;
+            --kouhou-muted: #64748b;
+            --kouhou-bg: #f4f7fb;
+            --kouhou-card: rgba(255, 255, 255, 0.94);
+            --kouhou-border: rgba(16, 42, 67, 0.12);
+        }
+
+        .stApp {
+            background:
+                radial-gradient(circle at top left, rgba(29, 95, 159, 0.14), transparent 34rem),
+                linear-gradient(180deg, #f7fbff 0%, var(--kouhou-bg) 46%, #eef3f8 100%);
+            color: var(--kouhou-ink);
+        }
+
+        .block-container {
+            max-width: 1180px;
+            padding-top: 2.4rem;
+            padding-bottom: 4rem;
+        }
+
+        .kouhou-hero {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--kouhou-border);
+            border-radius: 28px;
+            padding: 2rem 2.2rem;
+            margin-bottom: 1.4rem;
+            background:
+                linear-gradient(135deg, rgba(16, 42, 67, 0.96), rgba(29, 95, 159, 0.88)),
+                radial-gradient(circle at 85% 15%, rgba(199, 154, 53, 0.32), transparent 18rem);
+            box-shadow: 0 22px 55px rgba(16, 42, 67, 0.16);
+            color: white;
+        }
+
+        .kouhou-hero::after {
+            content: "";
+            position: absolute;
+            right: -5rem;
+            bottom: -7rem;
+            width: 18rem;
+            height: 18rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .kouhou-kicker {
+            display: inline-flex;
+            gap: 0.45rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            color: #f8df9a;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .kouhou-hero h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3.7rem);
+            line-height: 1.02;
+            letter-spacing: -0.055em;
+        }
+
+        .kouhou-hero p {
+            max-width: 48rem;
+            margin: 1rem 0 0;
+            color: rgba(255, 255, 255, 0.84);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        .kouhou-steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin: 1.5rem 0 0;
+            max-width: 54rem;
+        }
+
+        .kouhou-step {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 18px;
+            padding: 0.85rem 1rem;
+            background: rgba(255, 255, 255, 0.09);
+            backdrop-filter: blur(10px);
+        }
+
+        .kouhou-step strong {
+            display: block;
+            color: #fff8df;
+            font-size: 0.92rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .kouhou-step span {
+            color: rgba(255, 255, 255, 0.74);
+            font-size: 0.82rem;
+        }
+
+        div[data-testid="stVerticalBlock"] > div:has(> .kouhou-card-start) {
+            border: 1px solid var(--kouhou-border);
+            border-radius: 24px;
+            padding: 1.35rem 1.45rem 1.45rem;
+            margin: 1rem 0;
+            background: var(--kouhou-card);
+            box-shadow: 0 14px 36px rgba(16, 42, 67, 0.08);
+        }
+
+        .kouhou-card-start {
+            display: none;
+        }
+
+        .kouhou-section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            margin-bottom: 0.35rem;
+            color: var(--kouhou-blue);
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .kouhou-section-title {
+            margin: 0 0 0.2rem;
+            color: var(--kouhou-navy);
+            font-size: 1.42rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+
+        .kouhou-section-caption {
+            margin: 0 0 1rem;
+            color: var(--kouhou-muted);
+            font-size: 0.93rem;
+        }
+
+        .kouhou-channel-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.65rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .kouhou-channel-card {
+            min-height: 6.4rem;
+            border: 1px solid var(--kouhou-border);
+            border-radius: 18px;
+            padding: 0.9rem;
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+        }
+
+        .kouhou-channel-card strong {
+            display: block;
+            color: var(--kouhou-navy);
+            font-size: 0.95rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .kouhou-channel-card span {
+            color: var(--kouhou-muted);
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        div.stButton > button[kind="primary"] {
+            border: 0;
+            border-radius: 999px;
+            padding: 0.72rem 1.5rem;
+            background: linear-gradient(135deg, var(--kouhou-blue), var(--kouhou-navy));
+            box-shadow: 0 12px 26px rgba(29, 95, 159, 0.22);
+            font-weight: 800;
+        }
+
+        div.stButton > button,
+        div.stDownloadButton > button {
+            border-radius: 999px;
+            border-color: rgba(16, 42, 67, 0.16);
+        }
+
+        div[data-testid="stTextArea"] textarea,
+        div[data-testid="stTextInput"] input {
+            border-radius: 16px;
+        }
+
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 0.4rem;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 999px;
+            padding: 0.55rem 1rem;
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        @media (max-width: 760px) {
+            .block-container {
+                padding-top: 1.2rem;
+            }
+            .kouhou-hero {
+                padding: 1.35rem;
+                border-radius: 22px;
+            }
+            .kouhou-steps,
+            .kouhou-channel-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_hero() -> None:
+    st.markdown(
+        """
+        <section class="kouhou-hero">
+            <div class="kouhou-kicker">IWAKI JC PUBLIC RELATIONS</div>
+            <h1>いわきJC<br>広報アシスタント</h1>
+            <p>
+                議案書から、LINE・X・Facebook・Instagram・HP掲載文まで。
+                目的、対象、実務情報を読み取り、媒体ごとの言葉へ整えます。
+            </p>
+            <div class="kouhou-steps">
+                <div class="kouhou-step"><strong>1. Input</strong><span>議案書を貼り付け、またはファイルをアップロード</span></div>
+                <div class="kouhou-step"><strong>2. Structure</strong><span>中間サマリで事業情報を整理</span></div>
+                <div class="kouhou-step"><strong>3. Publish</strong><span>5媒体の文面を生成・修正・DL</span></div>
+            </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _section_header(step: str, title: str, caption: str) -> None:
+    st.markdown(
+        f"""
+        <span class="kouhou-card-start"></span>
+        <div class="kouhou-section-label">{step}</div>
+        <h2 class="kouhou-section-title">{title}</h2>
+        <p class="kouhou-section-caption">{caption}</p>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _get_secret(name: str) -> str | None:
     if name in os.environ:
         return os.environ[name]
@@ -53,7 +311,7 @@ def _check_password() -> bool:
     if st.session_state.get("authed"):
         return True
 
-    st.title("いわきJC 広報アシスタント")
+    _render_hero()
     entered = st.text_input("パスワード", type="password")
     if st.button("ログイン"):
         if entered == password:
@@ -76,7 +334,11 @@ def _get_client() -> ClaudeClient | None:
 
 def _input_section() -> str | None:
     """議案書テキストを取得。"""
-    st.subheader("1. 議案書を入力")
+    _section_header(
+        "STEP 01",
+        "議案書を入力",
+        "本文貼り付け、または PDF / Word / テキストファイルから読み取ります。",
+    )
     input_method = st.radio(
         "入力方法",
         ["テキストを貼り付け", "ファイルをアップロード"],
@@ -115,7 +377,23 @@ def _input_section() -> str | None:
 
 
 def _channel_selection() -> list[str]:
-    st.subheader("2. 生成するチャネルを選ぶ")
+    _section_header(
+        "STEP 02",
+        "生成するチャネルを選ぶ",
+        "対内向けと対外向けを必要に応じて選択します。",
+    )
+    st.markdown(
+        """
+        <div class="kouhou-channel-grid">
+            <div class="kouhou-channel-card"><strong>LINE</strong><span>会員向けの案内文。日時、服装、出欠など実務情報を整理。</span></div>
+            <div class="kouhou-channel-card"><strong>X</strong><span>告知から事後報告まで、時系列の5本セット。</span></div>
+            <div class="kouhou-channel-card"><strong>Facebook</strong><span>事業の背景と意義を伝える対外向け長文。</span></div>
+            <div class="kouhou-channel-card"><strong>Instagram</strong><span>スマホで読みやすいキャプションとハッシュタグ。</span></div>
+            <div class="kouhou-channel-card"><strong>HP</strong><span>公式掲載に使いやすい見出し付き本文。</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     col1, col2 = st.columns([1, 2])
     with col1:
         st.markdown("**対内（会員向け）**")
@@ -326,7 +604,11 @@ def _render_results(
     model_label: str,
     extra_instructions: str,
 ) -> None:
-    st.subheader("3. 生成された広報文")
+    _section_header(
+        "STEP 03",
+        "生成された広報文",
+        "直接編集、AI書き直し、ダウンロードまでここで完結します。",
+    )
     with st.expander("中間サマリを確認", expanded=False):
         st.json(summary)
 
@@ -425,11 +707,11 @@ def _clear_generated_state() -> None:
 
 
 def main() -> None:
+    _inject_theme_css()
     if not _check_password():
         return
 
-    st.title("📣 いわきJC 広報アシスタント")
-    st.caption("議案書から LINE / X / Facebook / Instagram / HP の広報文を生成します。")
+    _render_hero()
 
     client = _get_client()
     if client is None:
