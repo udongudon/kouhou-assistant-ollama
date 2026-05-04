@@ -305,6 +305,31 @@ def _inject_theme_css() -> None:
             fill: var(--kouhou-ink) !important;
         }
 
+        div[data-testid="stFileUploader"] section {
+            background: #ffffff !important;
+            border: 1px dashed rgba(29, 95, 159, 0.32) !important;
+            border-radius: 18px !important;
+        }
+
+        div[data-testid="stFileUploader"] section div,
+        div[data-testid="stFileUploader"] section span,
+        div[data-testid="stFileUploader"] section small {
+            color: var(--kouhou-ink) !important;
+        }
+
+        div[data-testid="stFileUploader"] section button {
+            background: #eef6ff !important;
+            border: 1px solid rgba(29, 95, 159, 0.28) !important;
+            color: var(--kouhou-navy) !important;
+        }
+
+        div[data-testid="stFileUploader"] section button span,
+        div[data-testid="stFileUploader"] section button p,
+        div[data-testid="stFileUploader"] section svg {
+            color: var(--kouhou-navy) !important;
+            fill: var(--kouhou-navy) !important;
+        }
+
         .stTabs [data-baseweb="tab-list"] {
             gap: 0.4rem;
         }
