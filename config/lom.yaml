@@ -1,0 +1,20 @@
+lom_name: 公益社団法人いわき青年会議所
+lom_short_name: いわきJC
+area: いわき市
+hashtags_default:
+  - "#いわき青年会議所"
+  - "#いわきJC"
+  - "#いわき"
+  - "#JC運動"
+  - "#明るい豊かな社会"
+
+# 申込・問い合わせ導線（事業ごとに上書き可能）
+contact:
+  website: https://www.iwaki-jc.or.jp/
+  inquiry: お問い合わせは公式HPまたは各SNSのDMまでお願いいたします。
+
+# 締め文の候補（チャネルごとに使い分け）
+closing_phrases:
+  formal: いわきの未来のために、皆様のご参加・ご支援を心よりお待ち申し上げております。
+  casual: いわきをもっと面白く、もっと元気に。皆さんのご参加、お待ちしてます！
+  internal: 多くのメンバーのご参加をよろしくお願いいたします。
