@@ -80,6 +80,35 @@ streamlit run app.py
 
 ブラウザで `http://localhost:8501` が自動で開きます。
 
+## Streamlit Community Cloud へのデプロイ
+
+この Ollama 版は元アプリとは別の GitHub リポジトリとして公開・デプロイしてください。
+
+### 推奨リポジトリ名
+
+```text
+kouhou-assistant-ollama
+```
+
+### Streamlit Cloud 設定
+
+Streamlit Community Cloud の「Create app」から下記を指定します。
+
+| 項目 | 値 |
+|------|----|
+| Repository | `udongudon/kouhou-assistant-ollama` |
+| Branch | `main` |
+| Main file path | `app.py` |
+
+「Advanced settings」→「Secrets」には、下記の形式で設定します。
+
+```toml
+OLLAMA_API_KEY = "ollama_..."
+APP_PASSWORD = "任意のパスワード"
+```
+
+`APP_PASSWORD` を省略すると、パスワードなしで起動します。`OLLAMA_API_KEY` は GitHub にはコミットせず、Streamlit Cloud の Secrets にだけ登録してください。
+
 ## 主要ディレクトリ構成
 
 ```
