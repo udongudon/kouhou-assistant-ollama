@@ -16,13 +16,13 @@
 
 ```
 app.py          UI ロジックのみ。API 呼び出しは src/ に委譲する。
-src/extract.py  ファイル読み取り専用。Anthropic API に依存しない。
-src/generate.py Anthropic API 呼び出し専用。Streamlit に依存しない。
+src/extract.py  ファイル読み取り専用。Ollama API に依存しない。
+src/generate.py Ollama Cloud API 呼び出し専用。Streamlit に依存しない。
 prompts/        プロンプトは .md ファイルで管理。コード内にハードコードしない。
 config/         団体固有情報・スタイルガイドは YAML で管理。
 ```
 
-- `app.py` から `anthropic` を直接インポートしない（型ヒントは除く）
+- `app.py` から `ollama` を直接インポートしない（型ヒントは除く）
 - `src/generate.py` から `streamlit` を直接インポートしない
 - 新しいチャネルを追加する場合は `prompts/<channel>.md` と `config/channels.yaml` に追記し、`generate.py` の `_max_tokens_for_channel()` にも追加する
 
@@ -56,7 +56,7 @@ config/         団体固有情報・スタイルガイドは YAML で管理。
 
 ---
 
-## Anthropic API の使い方
+## Ollama Cloud API の使い方
 
 ### モデル定義
 
@@ -64,27 +64,29 @@ config/         団体固有情報・スタイルガイドは YAML で管理。
 
 ```python
 MODELS: dict[str, dict[str, Any]] = {
-    "Haiku 4.5（高速・低コスト）": {
-        "id": "claude-haiku-4-5",
-        "thinking": None,   # Haiku は thinking 非対応
-        "effort": None,
+    "GPT-OSS 20B（無料枠・高速）": {
+        "id": "gpt-oss:20b",
+        "think": "low",
+        "temperature": 0.7,
+    },
+    "Gemma 4 31B Cloud（自然文・構造化）": {
+        "id": "gemma4:31b-cloud",
+        "think": "medium",
+        "temperature": 0.7,
     },
     ...
 }
-DEFAULT_MODEL_LABEL = "Haiku 4.5（高速・低コスト）"
+DEFAULT_MODEL_LABEL = "GPT-OSS 20B（無料枠・高速）"
 ```
 
-- Haiku 4.5 は `thinking` / `output_config` を渡さない（400 エラーになる）
-- Sonnet 4.6 / Opus 4.7 は `thinking: {"type": "adaptive"}` を使う
-- `budget_tokens` は非推奨。新規コードで使わない
-
-### プロンプトキャッシュ
-
-`_build_channel_system()` のシステムブロックに `cache_control: {"type": "ephemeral"}` を付与している。ユーザーメッセージ（中間サマリ）にはキャッシュを付けない（毎回変わるため）。
+- Ollama Cloud 直結時は `https://ollama.com` を host にし、`Authorization: Bearer <OLLAMA_API_KEY>` を付ける
+- ローカル Ollama 経由の `*-cloud` モデル名ではなく、直結 API では `gpt-oss:20b` / `gpt-oss:120b` を使う
+- GPT-OSS の思考量は `think: "low" | "medium" | "high"` で制御する
+- 出力長は `options.num_predict` で制御する
 
 ### ストリーミング
 
-`_stream_text()` で `.stream()` + `get_final_message()` を使う。タイムアウト回避のため全レスポンスでストリーミングを維持すること。
+`_stream_text()` で `client.chat(..., stream=True)` を使う。タイムアウト回避のため全レスポンスでストリーミングを維持すること。
 
 ---
 
@@ -92,7 +94,7 @@ DEFAULT_MODEL_LABEL = "Haiku 4.5（高速・低コスト）"
 
 | 変更箇所 | 確認事項 |
 |----------|----------|
-| `MODELS` dict の追加・変更 | `_build_request_kwargs()` で `thinking` / `effort` が正しく渡されるか |
+| `MODELS` dict の追加・変更 | `_build_request_kwargs()` で `model` / `options` が正しく渡されるか |
 | `prompts/extract.md` のスキーマ変更 | `app.py` の `summary.get(...)` 参照、`generate.py` の `_build_user_payload()` |
 | `config/channels.yaml` へのチャネル追加 | `app.py` の `_channel_selection()`、`generate.py` の `_max_tokens_for_channel()` |
 | セッションキーの追加 | `do_generate` 時のリセット処理（`app.py` 423行付近） |
@@ -123,8 +125,8 @@ streamlit run app.py
 ### よくあるエラー
 
 - **`AttributeError: 'NoneType' object has no attribute ...`**: セッションキーの命名ズレが多い。`result_` / `editor_` / `history_` のプレフィックスを確認
-- **`json.JSONDecodeError`**: `_parse_json_response()` がコードブロックを除去しているが、Haiku 4.5 の稀な出力崩れで発生することがある。`generate.py` の正規表現 fallback を確認
-- **`anthropic.BadRequestError`**: Haiku 4.5 に `thinking` や `output_config` を渡していないか確認
+- **`json.JSONDecodeError`**: `_parse_json_response()` がコードブロックを除去しているが、モデルの稀な出力崩れで発生することがある。`generate.py` の正規表現 fallback を確認
+- **`ollama.ResponseError`**: `OLLAMA_API_KEY`、モデルID、Ollama Cloud の利用枠を確認
 
 ---
 
@@ -133,7 +135,7 @@ streamlit run app.py
 ```bash
 pip install -r requirements.txt --upgrade
 # バージョン確認
-pip list | grep -E "streamlit|anthropic|pypdf|docx|yaml"
+pip list | grep -E "streamlit|ollama|pypdf|docx|yaml"
 ```
 
-`anthropic` パッケージの破壊的変更に注意。アップデート後は API 呼び出し部分（`src/generate.py`）を重点的に確認する。
+`ollama` パッケージの破壊的変更に注意。アップデート後は API 呼び出し部分（`src/generate.py`）を重点的に確認する。

@@ -18,9 +18,9 @@ from src.extract import extract, truncate_for_prompt
 from src.generate import (
     DEFAULT_MODEL_LABEL,
     MODELS,
-    ClaudeApiError,
-    ClaudeClient,
     Configs,
+    OllamaApiError,
+    OllamaClient,
     create_client,
     extract_summary,
     generate_channel,
@@ -30,7 +30,7 @@ from src.generate import (
 load_dotenv()
 
 st.set_page_config(
-    page_title="いわきJC 広報アシスタント",
+    page_title="いわきJC 広報アシスタント Ollama版",
     page_icon="📣",
     layout="wide",
 )
@@ -437,8 +437,8 @@ def _render_hero() -> None:
     st.markdown(
         """
         <section class="kouhou-hero">
-            <div class="kouhou-kicker">IWAKI JC PUBLIC RELATIONS</div>
-            <h1>いわきJC<br>広報アシスタント</h1>
+            <div class="kouhou-kicker">IWAKI JC PUBLIC RELATIONS / OLLAMA CLOUD</div>
+            <h1>いわきJC<br>広報アシスタント Ollama版</h1>
             <p>
                 議案書から、LINE・X・Facebook・Instagram・HP掲載文まで。
                 目的、対象、実務情報を読み取り、媒体ごとの言葉へ整えます。
@@ -494,11 +494,11 @@ def _check_password() -> bool:
     return False
 
 
-def _get_client() -> ClaudeClient | None:
-    api_key = _get_secret("ANTHROPIC_API_KEY")
+def _get_client() -> OllamaClient | None:
+    api_key = _get_secret("OLLAMA_API_KEY")
     if not api_key:
         st.error(
-            "ANTHROPIC_API_KEY が設定されていません。`.env` か `.streamlit/secrets.toml` に追加してください。"
+            "OLLAMA_API_KEY が設定されていません。`.env` か `.streamlit/secrets.toml` に追加してください。"
         )
         return None
     return create_client(api_key)
@@ -598,7 +598,7 @@ def _options_section() -> tuple[str, str]:
             "使用モデル",
             options=list(MODELS.keys()),
             index=list(MODELS.keys()).index(DEFAULT_MODEL_LABEL),
-            help="高品質な順: Opus 4.7 > Sonnet 4.6 > Haiku 4.5。コスト感もこの順。",
+            help="無料枠でまず使うなら GPT-OSS 20B。品質比較には GPT-OSS 120B / Gemma 4 を試してください。",
         )
         extra = st.text_area(
             "追加指示（任意）",
@@ -609,7 +609,7 @@ def _options_section() -> tuple[str, str]:
 
 
 def _ensure_summary(
-    client: ClaudeClient,
+    client: OllamaClient,
     document_text: str,
     model_label: str,
 ) -> dict[str, Any] | None:
@@ -631,9 +631,9 @@ def _ensure_summary(
             status.update(label="サマリのJSON解析に失敗", state="error")
             st.error(f"サマリのJSONを解析できませんでした: {exc}")
             return None
-        except ClaudeApiError as exc:
+        except OllamaApiError as exc:
             status.update(label="API呼び出しに失敗", state="error")
-            st.error(f"Claude API エラー: {exc}")
+            st.error(f"Ollama API エラー: {exc}")
             return None
 
     st.session_state[cache_key] = summary
@@ -644,7 +644,17 @@ def _ensure_summary(
 def _set_result(channel_id: str, text: str) -> None:
     """生成結果を更新し、編集中のテキストエリアもリセットする。"""
     st.session_state[f"result_{channel_id}"] = text
-    st.session_state.pop(f"editor_{channel_id}", None)
+    _clear_editor_state(channel_id)
+
+
+def _clear_editor_state(channel_id: str) -> None:
+    """チャネル別の編集UI状態を消す。Xは投稿別キーもまとめて消す。"""
+    prefixes = (f"editor_{channel_id}",)
+    if channel_id == "x":
+        prefixes = (f"editor_{channel_id}", "editor_x_post_")
+    for key in list(st.session_state.keys()):
+        if key.startswith(prefixes):
+            st.session_state.pop(key, None)
 
 
 def _push_history(channel_id: str, text: str, instruction: str) -> None:
@@ -658,7 +668,7 @@ def _push_history(channel_id: str, text: str, instruction: str) -> None:
 
 
 def _run_channel(
-    client: ClaudeClient,
+    client: OllamaClient,
     summary: dict[str, Any],
     channel_id: str,
     configs: Configs,
@@ -676,7 +686,7 @@ def _run_channel(
                 model_label=model_label,
                 extra_instructions=extra_instructions or None,
             )
-        except ClaudeApiError as exc:
+        except OllamaApiError as exc:
             st.error(f"生成に失敗しました ({channel_id}): {exc}")
             return None
     _set_result(channel_id, text)
@@ -693,6 +703,18 @@ def _parse_x_posts(text: str) -> list[tuple[str, str]]:
     ]
 
 
+def _format_x_posts(posts: list[tuple[str, str]]) -> str:
+    """分割編集したX投稿を保存・DL用の1本テキストに戻す。"""
+    return "\n\n".join(f"【{label}】\n{body.strip()}" for label, body in posts)
+
+
+def _x_body_char_count(body: str) -> int:
+    """URLとハッシュタグを除いたX本文の概算文字数を返す。"""
+    body_no_url = re.sub(r"https?://\S+", "URL", body)
+    body_no_tags = re.sub(r"#\S+", "", body_no_url).strip()
+    return len(body_no_tags)
+
+
 def _render_char_counts(channel_id: str, text: str, channel_cfg: dict[str, Any]) -> None:
     target = channel_cfg.get("char_target", "")
     total = len(text)
@@ -702,10 +724,7 @@ def _render_char_counts(channel_id: str, text: str, channel_cfg: dict[str, Any])
         if posts:
             cols = st.columns(len(posts))
             for col, (label, body) in zip(cols, posts):
-                # ハッシュタグ・URLを除いた本文の概算文字数
-                body_no_url = re.sub(r"https?://\S+", "URL", body)
-                body_no_tags = re.sub(r"#\S+", "", body_no_url).strip()
-                body_len = len(body_no_tags)
+                body_len = _x_body_char_count(body)
                 warning = "⚠️" if body_len > 140 else ""
                 col.metric(f"{label}", f"{body_len}字 {warning}", help="本文のみ（URL/ハッシュタグ除く目安）")
             st.caption(f"📝 全体: {total}字　目安: {target}")
@@ -715,8 +734,38 @@ def _render_char_counts(channel_id: str, text: str, channel_cfg: dict[str, Any])
     st.caption(f"目安: {target}")
 
 
+def _render_x_post_editors(text: str) -> str:
+    """Xの5投稿を個別ボックスで編集する。"""
+    posts = _parse_x_posts(text)
+    if not posts:
+        return st.text_area(
+            "本文（直接編集できます）",
+            value=text,
+            height=320,
+            key="editor_x",
+            label_visibility="collapsed",
+        )
+
+    edited_posts: list[tuple[str, str]] = []
+    for index, (label, body) in enumerate(posts):
+        body_len = _x_body_char_count(body)
+        warning = " ⚠️" if body_len > 140 else ""
+        with st.container(border=True):
+            st.markdown(f"**{label}**　`{body_len}字{warning}`")
+            edited_body = st.text_area(
+                f"{label}の本文",
+                value=body,
+                height=150,
+                key=f"editor_x_post_{index}",
+                label_visibility="collapsed",
+            )
+        edited_posts.append((label, edited_body))
+
+    return _format_x_posts(edited_posts)
+
+
 def _render_revision_form(
-    client: ClaudeClient,
+    client: OllamaClient,
     channel_id: str,
     current_text: str,
     configs: Configs,
@@ -747,7 +796,7 @@ def _render_revision_form(
                     configs=configs,
                     model_label=model_label,
                 )
-            except ClaudeApiError as exc:
+            except OllamaApiError as exc:
                 st.error(f"書き直しに失敗しました: {exc}")
                 return
         _push_history(channel_id, current_text, instruction.strip())
@@ -773,7 +822,7 @@ def _render_history(channel_id: str) -> None:
 
 
 def _render_results(
-    client: ClaudeClient,
+    client: OllamaClient,
     summary: dict[str, Any],
     selected_channels: list[str],
     configs: Configs,
@@ -827,13 +876,16 @@ def _render_results(
 
             # 編集可能テキストエリア（編集即反映）
             editor_key = f"editor_{channel_id}"
-            edited = st.text_area(
-                "本文（直接編集できます）",
-                value=text,
-                height=320,
-                key=editor_key,
-                label_visibility="collapsed",
-            )
+            if channel_id == "x":
+                edited = _render_x_post_editors(text)
+            else:
+                edited = st.text_area(
+                    "本文（直接編集できます）",
+                    value=text,
+                    height=320,
+                    key=editor_key,
+                    label_visibility="collapsed",
+                )
             if edited != text:
                 # 編集された内容を反映（履歴は積まない: 手作業の小修正用）
                 st.session_state[cache_key] = edited
@@ -848,7 +900,7 @@ def _render_results(
                 if st.button("白紙から再生成", key=f"btn_regen_{channel_id}",
                              help="議案書から作り直します（編集や修正履歴は破棄）"):
                     st.session_state.pop(cache_key, None)
-                    st.session_state.pop(editor_key, None)
+                    _clear_editor_state(channel_id)
                     st.session_state.pop(f"history_{channel_id}", None)
                     st.rerun()
             with col_b:

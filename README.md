@@ -21,7 +21,7 @@
 | 分類 | 技術 |
 |------|------|
 | UI | Streamlit >= 1.40.0 |
-| LLM | Anthropic Claude API (anthropic >= 0.50.0) |
+| LLM | Ollama Cloud API (ollama >= 0.6.0) |
 | PDF抽出 | pypdf >= 5.0.0 |
 | Word抽出 | python-docx >= 1.1.0 |
 | 設定 | PyYAML >= 6.0 |
@@ -32,16 +32,18 @@
 
 | ラベル | モデルID | デフォルト |
 |--------|----------|-----------|
-| Haiku 4.5（高速・低コスト） | claude-haiku-4-5 | ✅ |
-| Sonnet 4.6（バランス） | claude-sonnet-4-6 | |
-| Opus 4.7（最高品質） | claude-opus-4-7 | |
+| GPT-OSS 20B（無料枠・高速） | gpt-oss:20b | ✅ |
+| GPT-OSS 120B（無料枠・高品質） | gpt-oss:120b | |
+| Gemma 4 31B Cloud（自然文・構造化） | gemma4:31b-cloud | |
+
+※ Qwen 3.5 は Ollama のタグ一覧に `qwen3.5:122b-a10b` などがありますが、Ollama Cloud 直結 API では `qwen3.5:cloud` のみ認識されます。`qwen3.5:cloud` は API 呼び出し時にサブスクリプションが必要なため、無料運用向けの選択肢から外しています。
 
 ## セットアップ
 
 ### 1. 前提条件
 
 - Python 3.11 以上
-- Anthropic API キー（[https://console.anthropic.com](https://console.anthropic.com) で取得）
+- Ollama API キー（[https://ollama.com/settings/keys](https://ollama.com/settings/keys) で取得）
 
 ### 2. 仮想環境と依存パッケージ
 
@@ -60,13 +62,13 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# .env を開いて ANTHROPIC_API_KEY を設定
+# .env を開いて OLLAMA_API_KEY を設定
 ```
 
 または `.streamlit/secrets.toml` に記述（`.streamlit/secrets.toml.example` を参照）:
 
 ```toml
-ANTHROPIC_API_KEY = "sk-ant-..."
+OLLAMA_API_KEY = "ollama_..."
 APP_PASSWORD = "任意のパスワード"   # 省略するとパスワードなしで起動
 ```
 
@@ -89,7 +91,7 @@ kouhou/
 │   └── secrets.toml.example
 ├── src/
 │   ├── extract.py          # PDF / Word / テキスト抽出ユーティリティ
-│   └── generate.py         # Anthropic API 呼び出し・プロンプト組み立て
+│   └── generate.py         # Ollama Cloud API 呼び出し・プロンプト組み立て
 ├── prompts/
 │   ├── extract.md          # 議案書 → 中間サマリ JSON 抽出プロンプト
 │   ├── system_base.md      # 全チャネル共通システムプロンプト
@@ -109,12 +111,12 @@ kouhou/
 - **トンマナ調整**: `config/jc_style.yaml` の `tone_principles` / `avoid_phrases` を編集
 - **チャネル別の指示調整**: `prompts/<channel>.md` を直接編集
 - **LOM情報更新**: `config/lom.yaml` のハッシュタグ・締め文を変更
-- **モデル切替**: UI の「オプション」から Sonnet 4.6 / Opus 4.7 に変更すると品質が上がる
+- **モデル切替**: UI の「オプション」から GPT-OSS 120B / Gemma 4 に変更して品質を比較できる
 
 ## トラブルシュート
 
 | 症状 | 原因 | 対処 |
 |------|------|------|
 | 「ファイルからテキストを抽出できませんでした」 | スキャンPDF | OCR後に再アップロード、またはテキスト貼り付けで対応 |
-| 「サマリのJSON解析に失敗」 | Haiku 4.5 の稀な出力崩れ | Sonnet 4.6 / Opus 4.7 に切り替え |
+| 「サマリのJSON解析に失敗」 | モデルの稀な出力崩れ | GPT-OSS 120B に切り替え、または入力を短くする |
 | 議案書が長い | 自動で先頭3万字に切り詰め | 事業概要部分だけをテキスト貼り付けで処理 |

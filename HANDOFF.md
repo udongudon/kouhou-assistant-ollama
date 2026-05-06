@@ -13,8 +13,8 @@
 - [x] **2段階パイプライン**: 議案書テキスト → 中間サマリ JSON → チャネル別広報文
 - [x] **入力方法2種**: テキスト貼り付け / ファイルアップロード（PDF・Word・テキスト）
 - [x] **5チャネル生成**: LINE / X（5本セット）/ Facebook / Instagram / HP掲載文
-- [x] **プロンプトキャッシュ**: システムプロンプトに `cache_control: ephemeral` を設定済み（API コスト削減）
-- [x] **モデル選択 UI**: Haiku 4.5（デフォルト）/ Sonnet 4.6 / Opus 4.7 の3択
+- [x] **Ollama Cloud 対応**: `OLLAMA_API_KEY` で Ollama Cloud API に直接接続
+- [x] **モデル選択 UI**: GPT-OSS 20B（デフォルト）/ GPT-OSS 120B / Gemma 4
 
 ### UI・UX
 
@@ -66,8 +66,8 @@
 
 ### 既知の動作上の問題
 
-1. **Haiku 4.5 での JSON 解析失敗（稀）**  
-   `prompts/extract.md` への応答で稀にコードブロックなしの生 JSON が返らず解析に失敗する。`_parse_json_response()` に正規表現 fallback を実装済みだが、それでも失敗した場合は Sonnet 4.6 に切り替えると安定する。
+1. **GPT-OSS 20B での JSON 解析失敗（稀）**  
+   `prompts/extract.md` への応答で稀にコードブロックなしの生 JSON が返らず解析に失敗する。`_parse_json_response()` に正規表現 fallback を実装済みだが、それでも失敗した場合は GPT-OSS 120B に切り替えると安定する。
 
 2. **X 投稿の文字数カウントの精度**  
    `_render_char_counts()` でハッシュタグと URL を除外した概算文字数を表示しているが、X の実際のカウント（URLは23文字固定）とは厳密には一致しない。目安として使う前提。
@@ -101,7 +101,7 @@
 
 ### 3. プロンプト品質改善（優先度：中）
 
-**背景**: 現状の Haiku 4.5 デフォルトでは、特に Facebook・Instagram・HP の文体がやや単調になることがある。  
+**背景**: 現状の GPT-OSS 20B デフォルトでは、特に Facebook・Instagram・HP の文体がやや単調になることがある。  
 **依頼内容**:
 - `prompts/facebook.md` / `prompts/instagram.md` / `prompts/website.md` に few-shot 実例を追加する
 - 実例は広報委員会の担当者に「良かった投稿」を数件提供してもらい、プロンプトに組み込む
@@ -129,6 +129,6 @@
 
 ## 参考リンク
 
-- Anthropic API ドキュメント: https://docs.anthropic.com
+- Ollama Cloud ドキュメント: https://docs.ollama.com/cloud
 - Streamlit ドキュメント: https://docs.streamlit.io
 - いわきJC公式: https://www.iwaki-jc.or.jp/
