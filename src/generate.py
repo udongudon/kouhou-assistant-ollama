@@ -182,6 +182,15 @@ def generate_channel(
         max_tokens=max_tokens,
     )
     text, message = _stream_text(client, **kwargs)
+    if channel_id == "x" and _x_post_count(text) < len(X_POST_LABELS):
+        text, message = _repair_x_post_set(
+            client=client,
+            system_text=system_text,
+            user_payload=user_payload,
+            first_text=text,
+            model_label=model_label,
+            max_tokens=max_tokens,
+        )
     return text, message
 
 
@@ -267,6 +276,45 @@ def _max_tokens_for_channel(channel_id: str) -> int:
         "instagram": 2500,
         "website": 4000,
     }.get(channel_id, 2500)
+
+
+X_POST_LABELS = ("告知", "1週間前", "前日", "当日", "事後報告")
+_X_POST_RE = re.compile(r"【([^】]+)】\s*\n([\s\S]*?)(?=\n【|\Z)")
+
+
+def _x_post_count(text: str) -> int:
+    """モデルがXの5本セット形式を守ったかを確認する。"""
+    labels = {match.group(1).strip() for match in _X_POST_RE.finditer(text)}
+    return sum(1 for label in X_POST_LABELS if label in labels)
+
+
+def _repair_x_post_set(
+    *,
+    client: OllamaClient,
+    system_text: str,
+    user_payload: str,
+    first_text: str,
+    model_label: str,
+    max_tokens: int,
+) -> tuple[str, dict[str, Any]]:
+    """X出力が1本だけになった場合に、5本セットへ作り直す。"""
+    labels = "、".join(f"【{label}】" for label in X_POST_LABELS)
+    repair_payload = (
+        f"{user_payload}\n\n"
+        "# 重要な再生成条件\n\n"
+        f"直前の出力はX投稿セットとして不完全でした。必ず {labels} の5見出しをこの順番で出力してください。\n"
+        "見出しの表記は完全一致にしてください。1本だけで終わらせず、5本すべてを書いてください。\n"
+        "各投稿は本文140字以内を目安にし、コードブロックや前置きは出力しないでください。\n\n"
+        "# 直前の不完全な出力\n\n"
+        f"{first_text}"
+    )
+    kwargs = _build_request_kwargs(
+        model_label=model_label,
+        system_text=system_text,
+        messages=[{"role": "user", "content": repair_payload}],
+        max_tokens=max_tokens,
+    )
+    return _stream_text(client, **kwargs)
 
 
 _FENCED_JSON_RE = re.compile(r"```(?:json)?\s*([\s\S]*?)\s*```", re.IGNORECASE)
