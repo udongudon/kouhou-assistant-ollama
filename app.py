@@ -633,7 +633,7 @@ def _ensure_summary(
             return None
         except OllamaApiError as exc:
             status.update(label="API呼び出しに失敗", state="error")
-            st.error(f"Ollama API エラー: {exc}")
+            st.error(f"Ollama API エラー: {exc!r}")
             return None
 
     st.session_state[cache_key] = summary
@@ -687,7 +687,7 @@ def _run_channel(
                 extra_instructions=extra_instructions or None,
             )
         except OllamaApiError as exc:
-            st.error(f"生成に失敗しました ({channel_id}): {exc}")
+            st.error(f"生成に失敗しました ({channel_id}): {exc!r}")
             return None
     _set_result(channel_id, text)
     return text

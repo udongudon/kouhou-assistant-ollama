@@ -42,7 +42,7 @@ MODELS: dict[str, dict[str, Any]] = {
         "temperature": 0.7,
     },
     "Qwen 3.5 Cloud（多言語・長文）": {
-        "id": "qwen3.5:cloud",
+        "id": "qwen3.5",
         "think": False,
         "temperature": 0.7,
     },
