@@ -598,7 +598,7 @@ def _options_section() -> tuple[str, str]:
             "使用モデル",
             options=list(MODELS.keys()),
             index=list(MODELS.keys()).index(DEFAULT_MODEL_LABEL),
-            help="無料枠でまず使うなら GPT-OSS 20B。品質比較には GPT-OSS 120B / Gemma 4 / Qwen 3.5 を試してください。",
+            help="無料枠でまず使うなら GPT-OSS 20B。品質比較には GPT-OSS 120B / Gemma 4 を試してください。",
         )
         extra = st.text_area(
             "追加指示（任意）",

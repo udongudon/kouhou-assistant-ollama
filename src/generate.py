@@ -41,11 +41,6 @@ MODELS: dict[str, dict[str, Any]] = {
         "think": "medium",
         "temperature": 0.7,
     },
-    "Qwen 3.5 Cloud（多言語・長文）": {
-        "id": "qwen3.5",
-        "think": False,
-        "temperature": 0.7,
-    },
 }
 DEFAULT_MODEL_LABEL = "GPT-OSS 20B（無料枠・高速）"
 
